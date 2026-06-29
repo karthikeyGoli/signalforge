@@ -1,11 +1,11 @@
 {
-  "name": "signalforge",
+  "name": "signalforge-mcp",
   "version": "0.1.0",
   "description": "Local-first MCP prompt intent compiler with RAG-backed context retrieval for Codex, Claude Code, Cursor, and generic LLM workflows.",
   "type": "module",
   "bin": {
-    "signalforge": "./dist/cli.js",
-    "signalforge-mcp": "./dist/stdio.js"
+    "signalforge": "dist/cli.js",
+    "signalforge-mcp": "dist/stdio.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -28,6 +28,17 @@
   ],
   "author": "Karthikey G",
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karthikeyGoli/signalforge.git"
+  },
+  "homepage": "https://github.com/karthikeyGoli/signalforge#readme",
+  "bugs": {
+    "url": "https://github.com/karthikeyGoli/signalforge/issues"
+  },
   "engines": {
     "node": ">=20"
   },

@@ -1,0 +1,11 @@
+# Source and config — only the built dist/ is published
+src/
+tests/
+docs/
+.signalforge/
+node_modules/
+.env
+npm-debug.log*
+tsconfig.json
+vitest.config.ts
+.gitignore
