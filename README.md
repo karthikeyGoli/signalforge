@@ -1,5 +1,8 @@
 # SignalForge
 
+[![npm version](https://img.shields.io/npm/v/signalforge-mcp.svg)](https://www.npmjs.com/package/signalforge-mcp)
+[![license](https://img.shields.io/npm/l/signalforge-mcp.svg)](./LICENSE)
+
 SignalForge is a local-first MCP prompt intent compiler. It turns vague user requests into task-specific, cost-aware prompts for Codex first, while keeping adapters for Claude Code, Cursor, ChatGPT, Kimi, and generic LLM workflows.
 
 It is not another prompt prettifier. SignalForge detects intent, missing context, workflow shape, context waste, and likely failure modes before you spend a full model run.
@@ -20,7 +23,25 @@ The v2 direction adds RAG before generation: SignalForge can explicitly index tr
 
 ## Install
 
+Install from npm (recommended):
+
 ```bash
+npm install -g signalforge-mcp
+```
+
+This exposes two commands: `signalforge` (CLI) and `signalforge-mcp` (the MCP server).
+
+Or add it to a single project:
+
+```bash
+npm install signalforge-mcp
+```
+
+### Build from source
+
+```bash
+git clone https://github.com/karthikeyGoli/signalforge.git
+cd signalforge
 npm install
 npm run build
 ```
@@ -30,7 +51,7 @@ npm run build
 Codex:
 
 ```bash
-codex mcp add signalforge -- node C:\Users\Karthikey G\OneDrive\Documents\signalforge\dist\stdio.js
+codex mcp add signalforge -- signalforge-mcp
 ```
 
 Claude Desktop / Claude Code style config:
@@ -39,14 +60,26 @@ Claude Desktop / Claude Code style config:
 {
   "mcpServers": {
     "signalforge": {
-      "command": "node",
-      "args": ["C:\\Users\\Karthikey G\\OneDrive\\Documents\\signalforge\\dist\\stdio.js"]
+      "command": "signalforge-mcp"
     }
   }
 }
 ```
 
-MCP Inspector:
+If you prefer not to install globally, you can run it on demand with `npx`:
+
+```json
+{
+  "mcpServers": {
+    "signalforge": {
+      "command": "npx",
+      "args": ["-y", "signalforge-mcp"]
+    }
+  }
+}
+```
+
+MCP Inspector (from a source checkout):
 
 ```bash
 npm run inspect
