@@ -1,7 +1,7 @@
 {
   "name": "signalforge",
   "version": "0.1.0",
-  "description": "Local-first MCP prompt intent compiler for Codex, Claude Code, Cursor, and generic LLM workflows.",
+  "description": "Local-first MCP prompt intent compiler with RAG-backed context retrieval for Codex, Claude Code, Cursor, and generic LLM workflows.",
   "type": "module",
   "bin": {
     "signalforge": "./dist/cli.js",
@@ -22,6 +22,8 @@
     "codex",
     "claude-code",
     "prompt-compiler",
+    "rag",
+    "context-retrieval",
     "model-context-protocol"
   ],
   "author": "Karthikey G",

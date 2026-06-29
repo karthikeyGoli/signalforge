@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 import { analyzePrompt } from "./compiler/analyzer.js";
-import { compilePrompt } from "./compiler/compiler.js";
+import { compilePromptWithContext } from "./compiler/compiler.js";
 import { getPromptPattern, builtInUseCases } from "./compiler/patterns.js";
+import { indexContext, retrieveContext } from "./context/contextIndex.js";
 import type { TargetClient } from "./types.js";
 
 type ParsedArgs = {
   command: string;
   prompt: string;
+  promptParts: string[];
   targetClient: TargetClient;
   outputFormat?: string;
+  withContext: boolean;
+  contextQuery?: string;
+  contextMaxSnippets?: number;
 };
 
 async function main(): Promise<void> {
@@ -20,14 +25,36 @@ async function main(): Promise<void> {
   }
 
   if (args.command === "compile") {
-    const result = compilePrompt({
+    const result = await compilePromptWithContext({
       rawPrompt: args.prompt,
       targetClient: args.targetClient,
-      outputFormat: args.outputFormat
+      outputFormat: args.outputFormat,
+      useContext: args.withContext,
+      contextQuery: args.contextQuery,
+      contextMaxSnippets: args.contextMaxSnippets
     });
     console.log(result.compiledPrompt);
     console.log("\n---\nAnalysis:");
     print(result.analysis);
+    if (result.retrievedContext) {
+      console.log("\n---\nRetrieved context:");
+      print(result.retrievedContext);
+    }
+    return;
+  }
+
+  if (args.command === "index-context") {
+    print(await indexContext({ paths: args.promptParts.length ? args.promptParts : undefined }));
+    return;
+  }
+
+  if (args.command === "retrieve-context") {
+    print(
+      await retrieveContext({
+        query: args.prompt,
+        maxSnippets: args.contextMaxSnippets
+      })
+    );
     return;
   }
 
@@ -39,31 +66,51 @@ async function main(): Promise<void> {
     return;
   }
 
-  throw new Error("Usage: signalforge <analyze|compile|pattern> <prompt-or-use-case> [--target codex]");
+  throw new Error("Usage: signalforge <analyze|compile|pattern|index-context|retrieve-context> <prompt-or-paths> [--target codex] [--with-context]");
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
   const [command = "", ...rest] = argv;
-  const targetIndex = rest.indexOf("--target");
-  const formatIndex = rest.indexOf("--format");
-  const targetClient = targetIndex >= 0 ? (rest[targetIndex + 1] as TargetClient) : "codex";
-  const outputFormat = formatIndex >= 0 ? rest[formatIndex + 1] : undefined;
-  const promptParts = rest.filter((_, index) => {
-    if (targetIndex >= 0 && (index === targetIndex || index === targetIndex + 1)) return false;
-    if (formatIndex >= 0 && (index === formatIndex || index === formatIndex + 1)) return false;
-    return true;
-  });
+  const targetClient = readFlag(rest, "--target") as TargetClient | undefined;
+  const outputFormat = readFlag(rest, "--format");
+  const contextQuery = readFlag(rest, "--context-query");
+  const maxSnippetsRaw = readFlag(rest, "--max-snippets");
+  const promptParts = stripFlags(rest, new Set(["--target", "--format", "--context-query", "--max-snippets"]), new Set(["--with-context"]));
 
   return {
     command,
     prompt: promptParts.join(" ").trim(),
-    targetClient,
-    outputFormat
+    promptParts,
+    targetClient: targetClient ?? "codex",
+    outputFormat,
+    withContext: rest.includes("--with-context"),
+    contextQuery,
+    contextMaxSnippets: maxSnippetsRaw ? Number.parseInt(maxSnippetsRaw, 10) : undefined
   };
 }
 
 function print(data: unknown): void {
   console.log(JSON.stringify(data, null, 2));
+}
+
+function readFlag(args: string[], flag: string): string | undefined {
+  const index = args.indexOf(flag);
+  if (index < 0) return undefined;
+  return args[index + 1];
+}
+
+function stripFlags(args: string[], valueFlags: Set<string>, booleanFlags: Set<string>): string[] {
+  const stripped: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (valueFlags.has(arg)) {
+      index += 1;
+      continue;
+    }
+    if (booleanFlags.has(arg)) continue;
+    stripped.push(arg);
+  }
+  return stripped;
 }
 
 main().catch((error) => {

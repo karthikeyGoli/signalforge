@@ -15,6 +15,13 @@ describe("prompt analysis", () => {
     expect(analysis.clarityScore).toBeLessThan(70);
   });
 
+  it("treats make my app better as a vague coding request", () => {
+    const analysis = analyzePrompt({ rawPrompt: "make my app better", targetClient: "codex" });
+    expect(analysis.taskType).toBe("coding");
+    expect(analysis.missingContext).toContain("goal");
+    expect(analysis.recommendedWorkflow).toBe("clarify_first");
+  });
+
   it("recommends split prompts for oversized tasks", () => {
     const analysis = analyzePrompt({
       rawPrompt: "Build an end-to-end full stack production app with auth, payments, dashboard, deployment, tests, and automation",

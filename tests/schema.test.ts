@@ -4,7 +4,9 @@ import {
   compilePromptSchema,
   estimatePromptWasteSchema,
   getPromptPatternSchema,
+  indexContextSchema,
   listPatternsSchema,
+  retrieveContextSchema,
   savePatternSchema
 } from "../src/schemas.js";
 
@@ -15,6 +17,7 @@ describe("tool schemas", () => {
 
   it("validates compile_prompt input", () => {
     expect(compilePromptSchema.parse({ rawPrompt: "build app", constraints: ["no auth"] }).constraints).toEqual(["no auth"]);
+    expect(compilePromptSchema.parse({ rawPrompt: "build app", useContext: true }).useContext).toBe(true);
   });
 
   it("validates get_prompt_pattern input", () => {
@@ -28,5 +31,10 @@ describe("tool schemas", () => {
   it("validates memory tool inputs", () => {
     expect(savePatternSchema.parse({ name: "x", useCase: "debugging", template: "fix [x]" }).name).toBe("x");
     expect(listPatternsSchema.parse({ targetClient: "codex" }).targetClient).toBe("codex");
+  });
+
+  it("validates context tool inputs", () => {
+    expect(indexContextSchema.parse({ paths: ["README.md"] }).trustLevel).toBe("verified");
+    expect(retrieveContextSchema.parse({ query: "React testing", maxSnippets: 2 }).maxSnippets).toBe(2);
   });
 });

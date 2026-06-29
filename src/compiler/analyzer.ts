@@ -15,7 +15,7 @@ const taskSignals: Array<[TaskType, RegExp[]]> = [
   ["data_analysis", [/\bcsv\b/i, /\bdataset\b/i, /\bdataframe\b/i, /\banaly[sz]e data\b/i, /\bchart\b/i, /\bstatistics?\b/i, /\bsql\b/i]],
   ["planning", [/\bplan\b/i, /\barchitecture\b/i, /\broadmap\b/i, /\bstrategy\b/i, /\bdesign\b/i, /\bspec\b/i]],
   ["writing", [/\bwrite\b/i, /\bdraft\b/i, /\bemail\b/i, /\bpost\b/i, /\barticle\b/i, /\brewrite\b/i, /\bcopy\b/i]],
-  ["coding", [/\bbuild\b/i, /\bimplement\b/i, /\bcreate\b/i, /\badd\b/i, /\brefactor\b/i, /\bapi\b/i, /\bcomponent\b/i]]
+  ["coding", [/\bbuild\b/i, /\bimplement\b/i, /\bcreate\b/i, /\badd\b/i, /\brefactor\b/i, /\bapi\b/i, /\bcomponent\b/i, /\bapp\b/i, /\bwebsite\b/i, /\bfrontend\b/i, /\bui\b/i]]
 ];
 
 const techSignals = [
@@ -92,7 +92,11 @@ export function detectMissingContext(rawPrompt: string, taskType: TaskType): Mis
   const missing: MissingContextKey[] = [];
   const words = text.split(/\s+/).filter(Boolean);
 
-  if (words.length < 4 || /\b(do this|make it better|help me|stuff|etc)\b/i.test(rawPrompt)) {
+  if (
+    words.length < 4 ||
+    /\b(do this|make it better|help me|stuff|etc)\b/i.test(rawPrompt) ||
+    /\bmake\s+(my|this|the)?\s*(app|site|website|project|code|ui)?\s*better\b/i.test(rawPrompt)
+  ) {
     missing.push("goal");
   }
 

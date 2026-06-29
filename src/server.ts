@@ -2,14 +2,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import { adapterDescription } from "./compiler/adapters.js";
 import { analyzePrompt } from "./compiler/analyzer.js";
-import { compilePrompt } from "./compiler/compiler.js";
+import { compilePrompt, compilePromptWithContext } from "./compiler/compiler.js";
 import { builtInUseCases, getPromptPattern } from "./compiler/patterns.js";
+import { indexContext, readContextResource, retrieveContext } from "./context/contextIndex.js";
 import {
   analyzePromptSchema,
   compilePromptSchema,
   estimatePromptWasteSchema,
   getPromptPatternSchema,
+  indexContextSchema,
   listPatternsSchema,
+  retrieveContextSchema,
   savePatternSchema
 } from "./schemas.js";
 import { listPatterns, readPatternsResource, recentHistoryResource, savePattern } from "./memory/patternStore.js";
@@ -19,7 +22,7 @@ export function createSignalForgeServer(): McpServer {
     { name: "signalforge", version: "0.1.0" },
     {
       instructions:
-        "SignalForge compiles vague user intent into task-specific prompts. Use analyze_prompt before expensive work, compile_prompt when the user needs a ready-to-run prompt, and estimate_prompt_waste to reduce ambiguity, context bloat, and wasted model runs."
+        "SignalForge compiles vague user intent into task-specific prompts. Use analyze_prompt before expensive work, index_context for trusted local docs, retrieve_context for budgeted RAG snippets, compile_prompt for ready-to-run prompts, and estimate_prompt_waste to reduce ambiguity, context bloat, and wasted model runs."
     }
   );
 
@@ -38,11 +41,33 @@ export function createSignalForgeServer(): McpServer {
     "compile_prompt",
     {
       title: "Compile Prompt",
-      description: "Compile rough intent into a target-client prompt with assumptions, split plan, and cost-saving notes.",
+      description: "Compile rough intent into a target-client prompt with assumptions, split plan, optional retrieved local context, and cost-saving notes.",
       inputSchema: compilePromptSchema,
       annotations: { readOnlyHint: true, idempotentHint: true }
     },
-    async (args) => jsonToolResult(compilePrompt(args))
+    async (args) => jsonToolResult(await compilePromptWithContext(args))
+  );
+
+  server.registerTool(
+    "index_context",
+    {
+      title: "Index Context",
+      description: "Index explicit local trusted docs or repo guidance for retrieval-backed prompt compilation.",
+      inputSchema: indexContextSchema,
+      annotations: { idempotentHint: true }
+    },
+    async (args) => jsonToolResult(await indexContext(args))
+  );
+
+  server.registerTool(
+    "retrieve_context",
+    {
+      title: "Retrieve Context",
+      description: "Retrieve budgeted source-tagged snippets from the local SignalForge context index.",
+      inputSchema: retrieveContextSchema,
+      annotations: { readOnlyHint: true, idempotentHint: true }
+    },
+    async (args) => jsonToolResult(await retrieveContext(args))
   );
 
   server.registerTool(
@@ -146,6 +171,17 @@ function registerResources(server: McpServer): void {
       mimeType: "application/json"
     },
     async (uri) => resourceJson(uri.href, recentHistoryResource())
+  );
+
+  server.registerResource(
+    "context-index",
+    "signalforge://context/index",
+    {
+      title: "SignalForge Context Index",
+      description: "Summary of explicitly indexed local context for retrieval-backed prompt compilation.",
+      mimeType: "application/json"
+    },
+    async (uri) => resourceJson(uri.href, await readContextResource())
   );
 }
 

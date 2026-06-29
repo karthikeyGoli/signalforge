@@ -53,6 +53,11 @@ export type CompilePromptInput = {
   contextBudget?: number;
   constraints?: string[];
   outputFormat?: string;
+  useContext?: boolean;
+  contextQuery?: string;
+  contextMaxSnippets?: number;
+  contextTrustLevels?: ContextTrustLevel[];
+  retrievedContext?: RetrievedContext;
 };
 
 export type CompiledPrompt = {
@@ -63,6 +68,7 @@ export type CompiledPrompt = {
   followUpQuestions: string[];
   splitPlan: string[];
   costSavingNotes: string[];
+  retrievedContext?: RetrievedContext;
 };
 
 export type PromptPattern = {
@@ -72,4 +78,56 @@ export type PromptPattern = {
   template: string;
   notes?: string;
   savedAt: string;
+};
+
+export type ContextTrustLevel = "verified" | "user_approved" | "generated" | "unknown";
+
+export type ContextSourceKind = "project_doc" | "repo_file" | "prompt_pattern" | "adapter_doc" | "user_note";
+
+export type ContextChunk = {
+  id: string;
+  title: string;
+  sourcePath: string;
+  kind: ContextSourceKind;
+  trustLevel: ContextTrustLevel;
+  tags: string[];
+  text: string;
+  chunkIndex: number;
+  indexedAt: string;
+};
+
+export type ContextIndex = {
+  version: 1;
+  updatedAt: string;
+  chunks: ContextChunk[];
+};
+
+export type RetrievedContextSnippet = {
+  id: string;
+  title: string;
+  sourcePath: string;
+  kind: ContextSourceKind;
+  trustLevel: ContextTrustLevel;
+  score: number;
+  reason: string;
+  text: string;
+};
+
+export type RetrievedContext = {
+  enabled: boolean;
+  query: string;
+  queryExpansion?: QueryExpansion;
+  snippets: RetrievedContextSnippet[];
+  budget: {
+    maxSnippets: number;
+    maxChars: number;
+    usedChars: number;
+  };
+  notes: string[];
+};
+
+export type QueryExpansion = {
+  originalTerms: string[];
+  expandedTerms: string[];
+  appliedRules: string[];
 };
